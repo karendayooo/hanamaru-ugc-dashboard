@@ -503,11 +503,11 @@ export default function Dashboard() {
 
                   {platformEngagementData && platformEngagementData.length >= 2 && (
                     <div className={styles.lineChartWrapper}>
-              <svg 
-  className={styles.lineChart} 
-  viewBox="0 0 100 100" 
-  preserveAspectRatio="none"
->
+                      <svg 
+                        className={styles.lineChart} 
+                        viewBox="0 0 100 100" 
+                        preserveAspectRatio="none"
+                      >
                         {/* Instagram いいね数の折れ線 */}
                         <polyline
                           points={platformEngagementData.map((item, index) => {
@@ -573,24 +573,29 @@ export default function Dashboard() {
                               <circle 
                                 cx={x} 
                                 cy={y} 
-                                r="1.2"
+                                r="1.5"
                                 fill="#f97316"
                                 stroke="white"
-                                strokeWidth="0.8"
+                                strokeWidth="1"
                                 style={{
                                   filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
                                 }}
+                                vectorEffect="non-scaling-stroke"
                               />
                               <text 
                                 x={x} 
                                 y={y - 3} 
                                 fill="#f97316"
-                                fontSize="2.8"
+                                fontSize="2.5"
                                 fontWeight="600"
                                 textAnchor="middle"
                                 stroke="white"
-                                strokeWidth="0.8"
+                                strokeWidth="0.6"
                                 paintOrder="stroke"
+                                style={{
+                                  transform: 'scale(0.4, 1)',
+                                  transformOrigin: `${x}% ${y}%`
+                                }}
                               >
                                 {item.Instagram.likes}
                               </text>
@@ -615,24 +620,29 @@ export default function Dashboard() {
                               <circle 
                                 cx={x} 
                                 cy={y} 
-                                r="1.2"
+                                r="1.5"
                                 fill="#1DA1F2"
                                 stroke="white"
-                                strokeWidth="0.8"
+                                strokeWidth="1"
                                 style={{
                                   filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
                                 }}
+                                vectorEffect="non-scaling-stroke"
                               />
                               <text 
                                 x={x} 
                                 y={y + 5} 
                                 fill="#1DA1F2"
-                                fontSize="2.8"
+                                fontSize="2.5"
                                 fontWeight="600"
                                 textAnchor="middle"
                                 stroke="white"
-                                strokeWidth="0.8"
+                                strokeWidth="0.6"
                                 paintOrder="stroke"
+                                style={{
+                                  transform: 'scale(0.4, 1)',
+                                  transformOrigin: `${x}% ${y}%`
+                                }}
                               >
                                 {item.Twitter.likes}
                               </text>
