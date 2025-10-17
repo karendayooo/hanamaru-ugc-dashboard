@@ -570,10 +570,11 @@ export default function Dashboard() {
                           const y = 95 - ((item.Instagram.likes / maxValue) * 85);
                           return (
                             <g key={`ig-${index}`}>
-                              <circle 
+                              <ellipse 
                                 cx={x} 
                                 cy={y} 
-                                r="1.5"
+                                rx="0.6"
+                                ry="1.5"
                                 fill="#f97316"
                                 stroke="white"
                                 strokeWidth="1"
@@ -586,14 +587,14 @@ export default function Dashboard() {
                                 x={x} 
                                 y={y - 3} 
                                 fill="#f97316"
-                                fontSize="2.5"
+                                fontSize="3.5"
                                 fontWeight="600"
                                 textAnchor="middle"
                                 stroke="white"
-                                strokeWidth="0.6"
+                                strokeWidth="0.7"
                                 paintOrder="stroke"
                                 style={{
-                                  transform: 'scale(0.4, 1)',
+                                  transform: 'scale(0.35, 1)',
                                   transformOrigin: `${x}% ${y}%`
                                 }}
                               >
@@ -617,10 +618,11 @@ export default function Dashboard() {
                           const y = 95 - ((item.Twitter.likes / maxValue) * 85);
                           return (
                             <g key={`tw-${index}`}>
-                              <circle 
+                              <ellipse 
                                 cx={x} 
                                 cy={y} 
-                                r="1.5"
+                                rx="0.6"
+                                ry="1.5"
                                 fill="#1DA1F2"
                                 stroke="white"
                                 strokeWidth="1"
@@ -633,14 +635,14 @@ export default function Dashboard() {
                                 x={x} 
                                 y={y + 5} 
                                 fill="#1DA1F2"
-                                fontSize="2.5"
+                                fontSize="3.5"
                                 fontWeight="600"
                                 textAnchor="middle"
                                 stroke="white"
-                                strokeWidth="0.6"
+                                strokeWidth="0.7"
                                 paintOrder="stroke"
                                 style={{
-                                  transform: 'scale(0.4, 1)',
+                                  transform: 'scale(0.35, 1)',
                                   transformOrigin: `${x}% ${y}%`
                                 }}
                               >
