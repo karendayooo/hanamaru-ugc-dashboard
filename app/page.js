@@ -633,7 +633,7 @@ export default function Dashboard() {
                               />
                               <text 
                                 x={x} 
-                                y={y + 8}
+                                y={y + -5}
                                 fill="#1DA1F2"
                                 fontSize="3.5"
                                 fontWeight="600"
