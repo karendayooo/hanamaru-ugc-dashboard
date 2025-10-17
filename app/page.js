@@ -14,7 +14,8 @@ export default function Dashboard() {
   const [platformData, setPlatformData] = useState([]);
   const [trendData, setTrendData] = useState([]);
   const [menuData, setMenuData] = useState([]);
-  const [posts, setPosts] = useState([]);
+  const [instagramPosts, setInstagramPosts] = useState([]);
+  const [twitterPosts, setTwitterPosts] = useState([]);
   const [filters, setFilters] = useState({
     platform: 'すべて',
     menu: 'すべて',
@@ -24,8 +25,20 @@ export default function Dashboard() {
   const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [filters]);
+    let mounted = true;
+    
+    async function loadData() {
+      if (mounted) {
+        await fetchDashboardData();
+      }
+    }
+    
+    loadData();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [filters.platform, filters.menu, filters.period]);
 
   async function fetchDashboardData() {
     await Promise.all([
@@ -33,7 +46,8 @@ export default function Dashboard() {
       fetchPlatformData(),
       fetchTrendData(),
       fetchMenuData(),
-      fetchPosts()
+      fetchInstagramPosts(),
+      fetchTwitterPosts()
     ]);
   }
 
@@ -174,48 +188,58 @@ export default function Dashboard() {
     if (dateFilter) {
       query = query.gte('post_date', dateFilter);
     } else {
-      // デフォルトで過去7日間
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      query = query.gte('post_date', sevenDaysAgo);
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gte('post_date', fiveDaysAgo);
     }
 
     query = query.order('post_date');
 
     const { data } = await query;
 
-    if (data) {
-      const days = ['日', '月', '火', '水', '木', '金', '土'];
+    if (data && data.length > 0) {
+      const today = new Date();
+      const last5Days = [];
+      for (let i = 4; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        last5Days.push(date);
+      }
+
       const dayData = {};
 
       data.forEach(post => {
         const date = new Date(post.post_date);
-        const dayName = days[date.getDay()];
+        const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
         
-        if (!dayData[dayName]) {
-          dayData[dayName] = { 
-            day: dayName, 
+        if (!dayData[dateKey]) {
+          dayData[dateKey] = { 
+            day: dateKey,
             Instagram: { count: 0, likes: 0 },
             Twitter: { count: 0, likes: 0 }
           };
         }
 
         if (post.platform === 'Instagram') {
-          dayData[dayName].Instagram.count += 1;
-          dayData[dayName].Instagram.likes += post.likes || 0;
+          dayData[dateKey].Instagram.count += 1;
+          dayData[dateKey].Instagram.likes += post.likes || 0;
         } else {
-          dayData[dayName].Twitter.count += 1;
-          dayData[dayName].Twitter.likes += post.likes || 0;
+          dayData[dateKey].Twitter.count += 1;
+          dayData[dateKey].Twitter.likes += post.likes || 0;
         }
       });
 
-      const orderedDays = ['月', '火', '水', '木', '金', '土', '日'];
-      const trends = orderedDays.map(day => dayData[day] || {
-        day,
-        Instagram: { count: 0, likes: 0 },
-        Twitter: { count: 0, likes: 0 }
+      const trends = last5Days.map(date => {
+        const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
+        return dayData[dateKey] || {
+          day: dateKey,
+          Instagram: { count: 0, likes: 0 },
+          Twitter: { count: 0, likes: 0 }
+        };
       });
 
       setTrendData(trends);
+    } else {
+      setTrendData([]);
     }
   }
 
@@ -256,32 +280,74 @@ export default function Dashboard() {
     }
   }
 
-  async function fetchPosts() {
-    let query = supabase
-      .from('posts')
-      .select('*')
-      .not('menu_keyword', 'in', '("_キーワード設定","キーワード設定")')
-      .order('post_date', { ascending: false })
-      .limit(12);
+  async function fetchInstagramPosts() {
+    try {
+      let query = supabase
+        .from('posts')
+        .select('*')
+        .eq('platform', 'Instagram')
+        .not('menu_keyword', 'in', '("_キーワード設定","キーワード設定")')
+        .order('post_date', { ascending: false })
+        .limit(6);
 
-    if (filters.platform !== 'すべて') {
-      query = query.eq('platform', filters.platform);
-    }
-    if (filters.menu !== 'すべて') {
-      query = query.eq('menu_keyword', filters.menu);
-    }
+      if (filters.menu !== 'すべて') {
+        query = query.eq('menu_keyword', filters.menu);
+      }
 
-    const dateFilter = getDateFilter();
-    if (dateFilter) {
-      query = query.gte('post_date', dateFilter);
-    }
+      const dateFilter = getDateFilter();
+      if (dateFilter) {
+        query = query.gte('post_date', dateFilter);
+      }
 
-    const { data } = await query;
-    setPosts(data || []);
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Instagram投稿取得エラー:', error);
+        setInstagramPosts([]);
+      } else {
+        setInstagramPosts(data || []);
+      }
+    } catch (error) {
+      console.error('Instagram投稿取得エラー:', error);
+      setInstagramPosts([]);
+    }
+  }
+
+  async function fetchTwitterPosts() {
+    try {
+      let query = supabase
+        .from('posts')
+        .select('*')
+        .eq('platform', 'Twitter')
+        .not('menu_keyword', 'in', '("_キーワード設定","キーワード設定")')
+        .order('post_date', { ascending: false })
+        .limit(6);
+
+      if (filters.menu !== 'すべて') {
+        query = query.eq('menu_keyword', filters.menu);
+      }
+
+      const dateFilter = getDateFilter();
+      if (dateFilter) {
+        query = query.gte('post_date', dateFilter);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Twitter投稿取得エラー:', error);
+        setTwitterPosts([]);
+      } else {
+        setTwitterPosts(data || []);
+      }
+    } catch (error) {
+      console.error('Twitter投稿取得エラー:', error);
+      setTwitterPosts([]);
+    }
   }
 
   function formatDate(dateString) {
-    if (!dateString) return '';
+    if (!dateString) return '日時不明';
     const date = new Date(dateString);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000 / 60 / 60);
@@ -346,8 +412,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 続きは次のメッセージで */}
-            <div className={styles.statsGrid}>
+      <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>総投稿数</div>
           <div className={styles.statValue}>{stats.totalPosts.toLocaleString()}</div>
@@ -367,142 +432,318 @@ export default function Dashboard() {
       </div>
 
       <div className={styles.chartGrid}>
+        {/* プラットフォーム別投稿数・エンゲージメント（棒グラフ+折れ線グラフ） */}
         <div className={styles.chartCard}>
           <div className={styles.chartTitle}>プラットフォーム別投稿数・エンゲージメント</div>
-          <div className={styles.verticalBarChart}>
-            {platformData.map(item => (
-              <div key={item.platform} className={styles.verticalBarItem}>
-                <div className={styles.verticalBarContainer}>
-                  <div 
-                    className={`${styles.verticalBar} ${item.platform === 'Instagram' ? styles.instagramBar : styles.twitterBar}`}
-                    style={{height: `${Math.max(item.percentage, 5)}%`}}
-                  >
-                    <div className={styles.barTooltip}>
-                      <div>投稿: {item.count}</div>
-                      <div>❤️ {item.likes}</div>
-                      <div>💬 {item.comments}</div>
-                    </div>
-                  </div>
-                  <div className={styles.barValues}>
-                    <div className={styles.barValue}>{item.count}投稿</div>
-                    <div className={styles.barEngagement}>❤️ {item.likes.toLocaleString()}</div>
-                  </div>
-                </div>
-                <div className={styles.verticalBarLabel}>
-                  <div className={`${styles.platformIcon} ${item.platform === 'Instagram' ? styles.instagram : styles.twitter}`}>
-                    {item.platform === 'Instagram' ? 'IG' : 'TW'}
-                  </div>
-                  {item.platform}
+          <div className={styles.comboChart}>
+            <div className={styles.comboChartContainer}>
+              <div className={styles.yAxisLeft}>
+                <div className={styles.yAxisLabel}>投稿数</div>
+                <div className={styles.yAxisTicks}>
+                  {(() => {
+                    const maxCount = Math.max(...platformData.map(d => d.count), 1);
+                    const step = Math.max(10, Math.ceil(maxCount / 5 / 10) * 10);
+                    return [5, 4, 3, 2, 1, 0].map(i => (
+                      <div key={i} className={styles.yAxisTick}>{step * i}</div>
+                    ));
+                  })()}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className={styles.chartCard}>
-          <div className={styles.chartTitle}>投稿トレンド（過去7日間）</div>
-          <div className={styles.trendChart}>
-            <div className={styles.trendBars}>
-              {trendData.map((item, index) => {
-                const maxCount = Math.max(...trendData.map(d => d.Instagram.count + d.Twitter.count));
-                const totalCount = item.Instagram.count + item.Twitter.count;
-                const heightPercent = maxCount > 0 ? (totalCount / maxCount * 100) : 0;
+              <div className={styles.comboChartArea}>
+                <div className={styles.gridLines}>
+                  {[0, 1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className={styles.gridLine}></div>
+                  ))}
+                </div>
 
-                return (
-                  <div key={index} className={styles.trendBarGroup}>
-                    <div className={styles.trendBarContainer}>
-                      <div 
-                        className={styles.trendBarInstagram}
-                        style={{height: `${item.Instagram.count / maxCount * 100}%`}}
-                      >
-                        <span className={styles.trendBarValue}>{item.Instagram.count}</span>
+                <div className={styles.barsContainer}>
+                  {platformData.map((platform, index) => {
+                    const maxCount = Math.max(...platformData.map(d => d.count), 1);
+                    const step = Math.max(10, Math.ceil(maxCount / 5 / 10) * 10);
+                    const maxValue = step * 5;
+                    const heightPercent = (platform.count / maxValue) * 100;
+
+                    return (
+                      <div key={index} className={styles.barWrapper}>
+                        <div 
+                          className={`${styles.comboBar} ${platform.platform === 'Instagram' ? styles.instagramBar : styles.twitterBar}`}
+                          style={{height: `${Math.max(heightPercent, 8)}%`}}
+                        >
+                          {platform.count > 0 && (
+                            <div className={styles.barValueTop}>{platform.count}</div>
+                          )}
+                        </div>
                       </div>
-                      <div 
-                        className={styles.trendBarTwitter}
-                        style={{height: `${item.Twitter.count / maxCount * 100}%`}}
-                      >
-                        <span className={styles.trendBarValue}>{item.Twitter.count}</span>
-                      </div>
-                    </div>
-                    <div className={styles.trendBarLabel}>{item.day}</div>
+                    );
+                  })}
+                </div>
+
+                {platformData && platformData.length >= 2 && (
+                  <div className={styles.lineChartWrapper}>
+                    <svg 
+                      className={styles.lineChart} 
+                      viewBox="0 0 100 100" 
+                      preserveAspectRatio="none"
+                    >
+                      <polyline
+                        points={platformData.map((platform, index) => {
+                          const maxLikes = Math.max(...platformData.map(d => d.likes), 1);
+                          const step = Math.ceil(maxLikes / 5 / 100) * 100;
+                          const maxValue = step * 5;
+                          const x = ((index + 0.5) / platformData.length) * 100;
+                          const y = 95 - ((platform.likes / maxValue) * 85);
+                          return `${x},${y}`;
+                        }).join(' ')}
+                        fill="none"
+                        stroke="#10b981"
+                        strokeWidth="1"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{
+                          filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.5))',
+                          vectorEffect: 'non-scaling-stroke'
+                        }}
+                      />
+                      {platformData.map((platform, index) => {
+                        const maxLikes = Math.max(...platformData.map(d => d.likes), 1);
+                        const step = Math.ceil(maxLikes / 5 / 100) * 100;
+                        const maxValue = step * 5;
+                        const x = ((index + 0.5) / platformData.length) * 100;
+                        const y = 95 - ((platform.likes / maxValue) * 85);
+                        return (
+                          <g key={`point-${index}`}>
+                            <circle 
+                              cx={x} 
+                              cy={y} 
+                              r="1.5"
+                              fill="#10b981"
+                              stroke="white"
+                              strokeWidth="0.6"
+                              style={{
+                                filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
+                                vectorEffect: 'non-scaling-stroke'
+                              }}
+                            />
+                            {platform.likes > 0 && (
+                              <text 
+                                x={x} 
+                                y={y < 15 ? y + 8 : y - 5} 
+                                fill="#10b981"
+                                fontSize="4"
+                                fontWeight="900"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                stroke="white"
+                                strokeWidth="1"
+                                paintOrder="stroke"
+                              >
+                                {platform.likes.toLocaleString()}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      })}
+                    </svg>
                   </div>
-                );
-              })}
+                )}
+              </div>
+
+              <div className={styles.yAxisRight}>
+                <div className={styles.yAxisLabel}>いいね数</div>
+                <div className={styles.yAxisTicks}>
+                  {(() => {
+                    const maxLikes = Math.max(...platformData.map(d => d.likes), 1);
+                    const step = Math.ceil(maxLikes / 5 / 100) * 100;
+                    return [5, 4, 3, 2, 1, 0].map(i => (
+                      <div key={i} className={styles.yAxisTick}>
+                        {(step * i).toLocaleString()}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
             </div>
+
+            <div className={styles.xAxisLabels}>
+              {platformData.map((platform, index) => (
+                <div key={index} className={styles.xAxisLabel}>
+                  {platform.platform === 'Instagram' ? 'IG' : 'TW'} {platform.platform}
+                </div>
+              ))}
+            </div>
+
             <div className={styles.chartLegend}>
               <div className={styles.legendItem}>
                 <div className={`${styles.legendColor} ${styles.instagramBar}`}></div>
-                <span>Instagram</span>
+                <span>投稿数</span>
               </div>
               <div className={styles.legendItem}>
-                <div className={`${styles.legendColor} ${styles.twitterBar}`}></div>
-                <span>Twitter</span>
+                <div className={styles.legendLine}></div>
+                <span>いいね数</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className={styles.chartCard} style={{marginBottom: '24px'}}>
-        <div className={styles.chartTitle}>メニュー別パフォーマンス</div>
-        <div className={styles.hashtagGrid}>
-          {menuData.map(item => (
-            <div key={item.menu} className={styles.hashtagCard}>
-              <div className={styles.hashtagName}>{item.menu}</div>
-              <div className={styles.hashtagStats}>
-                <span>{item.count}投稿</span>
-                <span>{item.avgEngagement}</span>
-              </div>
-            </div>
-          ))}
+        <div className={styles.chartCard}>
+          <div className={styles.chartTitle}>プラットフォーム別投稿トレンド（過去5日間）</div>
+          <div className={styles.trendChart}>
+            {trendData.length > 0 ? (
+              <>
+                <div className={styles.trendBars}>
+                  {trendData.map((item, index) => {
+                    const maxCount = Math.max(...trendData.map(d => d.Instagram.count + d.Twitter.count), 1);
+                    
+                    return (
+                      <div key={index} className={styles.trendBarGroup}>
+                        <div className={styles.trendBarContainer}>
+                          <div 
+                            className={styles.trendBarInstagram}
+                            style={{height: `${Math.max((item.Instagram.count / maxCount * 100), 10)}%`}}
+                          >
+                            {item.Instagram.count > 0 && (
+                              <span className={styles.trendBarValue}>{item.Instagram.count}</span>
+                            )}
+                          </div>
+                          <div 
+                            className={styles.trendBarTwitter}
+                            style={{height: `${Math.max((item.Twitter.count / maxCount * 100), 10)}%`}}
+                          >
+                            {item.Twitter.count > 0 && (
+                              <span className={styles.trendBarValue}>{item.Twitter.count}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className={styles.trendBarLabel}>{item.day}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className={styles.chartLegend}>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.instagramBar}`}></div>
+                    <span>Instagram</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendColor} ${styles.twitterBar}`}></div>
+                    <span>Twitter</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className={styles.noData}>データがありません</div>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Instagram & Twitter 投稿セクション */}
       <div className={styles.postsSection}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionTitle}>最新の投稿</div>
+          <h2 className={styles.sectionTitle}>最新の投稿</h2>
         </div>
-
-        <div className={styles.postsGrid}>
-          {posts.map(post => (
-            <div key={post.id} className={styles.postCard}>
-              {post.media_url && post.platform === 'Instagram' && (
-                <div className={styles.postImage}>
-                  <img src={post.media_url} alt="投稿画像" />
-                </div>
-              )}
-              <div className={styles.postHeader}>
-                <div className={styles.postAvatar}>
-                  {post.username ? post.username[0].toUpperCase() : post.platform[0]}
-                </div>
-                <div className={styles.postInfo}>
-                  <div className={styles.postUsername}>
-                    {post.username || `${post.platform}ユーザー`}
-                  </div>
-                  <div className={styles.postTime}>
-                    {formatDate(post.post_date)} • {post.platform}
-                  </div>
-                </div>
-              </div>
-              <div className={styles.postContent}>
-                <div className={styles.postText}>
-                  {post.content?.substring(0, 150) || '投稿内容がありません'}
-                  {post.content?.length > 150 && '...'}
-                </div>
-                <div className={styles.postHashtag}>
-                  #{post.menu_keyword}
-                </div>
-              </div>
-              <div className={styles.postStats}>
-                <div className={styles.postStat}>❤️ {post.likes}</div>
-                <div className={styles.postStat}>💬 {post.comments}</div>
-                {post.shares > 0 && <div className={styles.postStat}>🔄 {post.shares}</div>}
-              </div>
+        
+        <div className={styles.platformPostsContainer}>
+          {/* Instagram投稿 */}
+          <div className={styles.platformColumn}>
+            <div className={styles.platformColumnHeader}>
+              <div className={`${styles.platformIcon} ${styles.instagram}`}>IG</div>
+              <h3>Instagram</h3>
             </div>
-          ))}
+            <div className={styles.postsColumn}>
+              {instagramPosts.length > 0 ? (
+                instagramPosts.map((post, index) => (
+                  <div key={index} className={styles.postCard}>
+                    {post.media_url && (
+                      <div className={styles.postImage}>
+                        <img src={post.media_url} alt="Instagram投稿" />
+                      </div>
+                    )}
+                    <div className={styles.postHeader}>
+                      <div className={styles.postAvatar}>
+                        {post.username ? post.username.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className={styles.postInfo}>
+                        <div className={styles.postUsername}>@{post.username || 'unknown'}</div>
+                        <div className={styles.postTime}>{formatDate(post.post_date)}</div>
+                      </div>
+                    </div>
+                    <div className={styles.postContent}>
+                      <p className={styles.postText}>
+                        {post.content && post.content.trim() !== '' 
+                          ? (post.content.length > 150 ? post.content.substring(0, 150) + '...' : post.content)
+                          : post.menu_keyword && post.menu_keyword !== '_キーワード設定' && post.menu_keyword !== 'キーワード設定'
+                            ? `#${post.menu_keyword} についての投稿`
+                            : 'Instagram投稿'}
+                      </p>
+                      {post.menu_keyword && post.menu_keyword !== '_キーワード設定' && post.menu_keyword !== 'キーワード設定' && (
+                        <span className={styles.postHashtag}>#{post.menu_keyword}</span>
+                      )}
+                    </div>
+                    <div className={styles.postStats}>
+                      <div className={styles.postStat}>❤️ {(post.likes || 0).toLocaleString()}</div>
+                      <div className={styles.postStat}>💬 {(post.comments || 0).toLocaleString()}</div>
+                      <div className={styles.postStat}>🔄 {(post.shares || 0).toLocaleString()}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.noData}>投稿がありません</div>
+              )}
+            </div>
+          </div>
+
+          {/* Twitter投稿 */}
+          <div className={styles.platformColumn}>
+            <div className={styles.platformColumnHeader}>
+              <div className={`${styles.platformIcon} ${styles.twitter}`}>X</div>
+              <h3>Twitter</h3>
+            </div>
+            <div className={styles.postsColumn}>
+              {twitterPosts.length > 0 ? (
+                twitterPosts.map((post, index) => (
+                  <div key={index} className={styles.postCard}>
+                    {post.media_url && (
+                      <div className={styles.postImage}>
+                        <img src={post.media_url} alt="Twitter投稿" />
+                      </div>
+                    )}
+                    <div className={styles.postHeader}>
+                      <div className={styles.postAvatar}>
+                        {post.username ? post.username.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className={styles.postInfo}>
+                        <div className={styles.postUsername}>@{post.username || 'unknown'}</div>
+                        <div className={styles.postTime}>{formatDate(post.post_date)}</div>
+                      </div>
+                    </div>
+                    <div className={styles.postContent}>
+                      <p className={styles.postText}>
+                        {post.content && post.content.trim() !== '' 
+                          ? (post.content.length > 150 ? post.content.substring(0, 150) + '...' : post.content)
+                          : post.menu_keyword && post.menu_keyword !== '_キーワード設定' && post.menu_keyword !== 'キーワード設定'
+                            ? `#${post.menu_keyword} についての投稿`
+                            : 'Twitter投稿'}
+                      </p>
+                      {post.menu_keyword && post.menu_keyword !== '_キーワード設定' && post.menu_keyword !== 'キーワード設定' && (
+                        <span className={styles.postHashtag}>#{post.menu_keyword}</span>
+                      )}
+                    </div>
+                    <div className={styles.postStats}>
+                      <div className={styles.postStat}>❤️ {(post.likes || 0).toLocaleString()}</div>
+                      <div className={styles.postStat}>💬 {(post.comments || 0).toLocaleString()}</div>
+                      <div className={styles.postStat}>🔄 {(post.shares || 0).toLocaleString()}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.noData}>投稿がありません</div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
