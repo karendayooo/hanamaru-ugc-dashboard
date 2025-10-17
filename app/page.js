@@ -547,147 +547,149 @@ export default function Dashboard() {
 
                 </div>
 
-                {platformEngagementData && platformEngagementData.length >= 2 && (
-                  <div className={styles.lineChartWrapper}>
-                    <svg 
-                      className={styles.lineChart} 
-                      viewBox="0 0 100 100" 
-                      preserveAspectRatio="none"
-                    >
-                      {/* Instagram いいね数の折れ線 */}
-                      <polyline
-                        points={platformEngagementData.map((item, index) => {
-                          const maxLikes = Math.max(
-                            ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
-                            1
-                          );
-                          const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
-                          const maxValue = step * 5;
-                          const x = ((index + 0.5) / platformEngagementData.length) * 100;
-                          const y = 95 - ((item.Instagram.likes / maxValue) * 85);
-                          return `${x},${y}`;
-                        }).join(' ')}
-                        fill="none"
-                        stroke="#f97316"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{
-                          filter: 'drop-shadow(0 3px 6px rgba(249, 115, 22, 0.6))',
-                          vectorEffect: 'non-scaling-stroke'
-                        }}
-                      />
-                      
-                      {/* Twitter いいね数の折れ線 */}
-                      <polyline
-                        points={platformEngagementData.map((item, index) => {
-                          const maxLikes = Math.max(
-                            ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
-                            1
-                          );
-                          const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
-                          const maxValue = step * 5;
-                          const x = ((index + 0.5) / platformEngagementData.length) * 100;
-                          const y = 95 - ((item.Twitter.likes / maxValue) * 85);
-                          return `${x},${y}`;
-                        }).join(' ')}
-                        fill="none"
-                        stroke="#1DA1F2"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{
-                          filter: 'drop-shadow(0 3px 6px rgba(29, 161, 242, 0.6))',
-                          vectorEffect: 'non-scaling-stroke'
-                        }}
-                      />
-                      
-                      {/* Instagram ポイント */}
-                      {platformEngagementData.map((item, index) => {
-                        const maxLikes = Math.max(
-                          ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
-                          1
-                        );
-                        const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
-                        const maxValue = step * 5;
-                        const x = ((index + 0.5) / platformEngagementData.length) * 100;
-                        const y = 95 - ((item.Instagram.likes / maxValue) * 85);
-                        return (
-                          <g key={`ig-${index}`}>
-                            <circle 
-                              cx={x} 
-                              cy={y} 
-                              r="2.5"
-                              fill="#f97316"
-                              stroke="white"
-                              strokeWidth="1.5"
-                              style={{
-                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-                              }}
-                            />
-                            {item.Instagram.likes > 0 && (
-                              <text 
-                                x={x} 
-                                y={y - 6} 
-                                fill="#f97316"
-                                fontSize="5"
-                                fontWeight="900"
-                                textAnchor="middle"
-                                stroke="white"
-                                strokeWidth="1.5"
-                                paintOrder="stroke"
-                              >
-                                {item.Instagram.likes}
-                              </text>
-                            )}
-                          </g>
-                        );
-                      })}
-                      
-                      {/* Twitter ポイント */}
-                      {platformEngagementData.map((item, index) => {
-                        const maxLikes = Math.max(
-                          ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
-                          1
-                        );
-                        const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
-                        const maxValue = step * 5;
-                        const x = ((index + 0.5) / platformEngagementData.length) * 100;
-                        const y = 95 - ((item.Twitter.likes / maxValue) * 85);
-                        return (
-                          <g key={`tw-${index}`}>
-                            <circle 
-                              cx={x} 
-                              cy={y} 
-                              r="2.5"
-                              fill="#1DA1F2"
-                              stroke="white"
-                              strokeWidth="1.5"
-                              style={{
-                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-                              }}
-                            />
-                            {item.Twitter.likes > 0 && (
-                              <text 
-                                x={x} 
-                                y={y + 8} 
-                                fill="#1DA1F2"
-                                fontSize="5"
-                                fontWeight="900"
-                                textAnchor="middle"
-                                stroke="white"
-                                strokeWidth="1.5"
-                                paintOrder="stroke"
-                              >
-                                {item.Twitter.likes}
-                              </text>
-                            )}
-                          </g>
-                        );
-                      })}
-                    </svg>
-                  </div>
-                )}
+        {platformEngagementData && platformEngagementData.length >= 2 && (
+  <div className={styles.lineChartWrapper}>
+    <svg 
+      className={styles.lineChart} 
+      viewBox="0 0 100 100" 
+      preserveAspectRatio="none"
+      style={{ pointerEvents: 'none' }}
+    >
+      {/* Instagram いいね数の折れ線 */}
+      <polyline
+        points={platformEngagementData.map((item, index) => {
+          const maxLikes = Math.max(
+            ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
+            1
+          );
+          const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
+          const maxValue = step * 5;
+          const x = ((index + 0.5) / platformEngagementData.length) * 100;
+          const y = 95 - ((item.Instagram.likes / maxValue) * 85);
+          return `${x},${y}`;
+        }).join(' ')}
+        fill="none"
+        stroke="#f97316"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          filter: 'drop-shadow(0 2px 4px rgba(249, 115, 22, 0.4))',
+          vectorEffect: 'non-scaling-stroke'
+        }}
+      />
+      
+      {/* Twitter いいね数の折れ線 */}
+      <polyline
+        points={platformEngagementData.map((item, index) => {
+          const maxLikes = Math.max(
+            ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
+            1
+          );
+          const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
+          const maxValue = step * 5;
+          const x = ((index + 0.5) / platformEngagementData.length) * 100;
+          const y = 95 - ((item.Twitter.likes / maxValue) * 85);
+          return `${x},${y}`;
+        }).join(' ')}
+        fill="none"
+        stroke="#1DA1F2"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          filter: 'drop-shadow(0 2px 4px rgba(29, 161, 242, 0.4))',
+          vectorEffect: 'non-scaling-stroke'
+        }}
+      />
+      
+      {/* Instagram ポイント */}
+      {platformEngagementData.map((item, index) => {
+        const maxLikes = Math.max(
+          ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
+          1
+        );
+        const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
+        const maxValue = step * 5;
+        const x = ((index + 0.5) / platformEngagementData.length) * 100;
+        const y = 95 - ((item.Instagram.likes / maxValue) * 85);
+        return (
+          <g key={`ig-${index}`}>
+            <circle 
+              cx={x} 
+              cy={y} 
+              r="1.2"
+              fill="#f97316"
+              stroke="white"
+              strokeWidth="0.8"
+              style={{
+                filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
+              }}
+            />
+            {item.Instagram.likes > 0 && (
+              <text 
+                x={x} 
+                y={y - 3} 
+                fill="#f97316"
+                fontSize="2.8"
+                fontWeight="600"
+                textAnchor="middle"
+                stroke="white"
+                strokeWidth="0.8"
+                paintOrder="stroke"
+              >
+                {item.Instagram.likes}
+              </text>
+            )}
+          </g>
+        );
+      })}
+      
+      {/* Twitter ポイント */}
+      {platformEngagementData.map((item, index) => {
+        const maxLikes = Math.max(
+          ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
+          1
+        );
+        const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
+        const maxValue = step * 5;
+        const x = ((index + 0.5) / platformEngagementData.length) * 100;
+        const y = 95 - ((item.Twitter.likes / maxValue) * 85);
+        return (
+          <g key={`tw-${index}`}>
+            <circle 
+              cx={x} 
+              cy={y} 
+              r="1.2"
+              fill="#1DA1F2"
+              stroke="white"
+              strokeWidth="0.8"
+              style={{
+                filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
+              }}
+            />
+            {item.Twitter.likes > 0 && (
+              <text 
+                x={x} 
+                y={y + 5} 
+                fill="#1DA1F2"
+                fontSize="2.8"
+                fontWeight="600"
+                textAnchor="middle"
+                stroke="white"
+                strokeWidth="0.8"
+                paintOrder="stroke"
+              >
+                {item.Twitter.likes}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  </div>
+)}
+
               </div>
 
               <div className={styles.yAxisRight}>
