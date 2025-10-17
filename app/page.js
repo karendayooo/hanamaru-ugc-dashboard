@@ -196,8 +196,6 @@ export default function Dashboard() {
 
     const { data } = await query;
 
-    console.log('fetchPlatformEngagementData - raw data:', data);
-
     if (data && data.length > 0) {
       const today = new Date();
       const last5Days = [];
@@ -239,10 +237,8 @@ export default function Dashboard() {
         };
       });
 
-      console.log('platformEngagementData - processed:', trends);
       setPlatformEngagementData(trends);
     } else {
-      console.log('platformEngagementData - no data');
       setPlatformEngagementData([]);
     }
   }
@@ -361,9 +357,6 @@ export default function Dashboard() {
     return `${Math.floor(diff / 24)}日前`;
   }
 
-  console.log('platformEngagementData state:', platformEngagementData);
-  console.log('platformEngagementData length:', platformEngagementData.length);
-
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -442,12 +435,6 @@ export default function Dashboard() {
         {/* プラットフォーム別投稿数・エンゲージメント（時間軸） */}
         <div className={styles.chartCard} style={{gridColumn: '1 / -1'}}>
           <div className={styles.chartTitle}>プラットフォーム別投稿数・エンゲージメント（過去5日間）</div>
-          
-          <div style={{padding: '10px', background: '#f0f0f0', marginBottom: '10px', fontSize: '12px'}}>
-            データ数: {platformEngagementData.length}
-            <br/>
-            データ内容: {JSON.stringify(platformEngagementData).substring(0, 200)}...
-          </div>
 
           {platformEngagementData.length === 0 ? (
             <div className={styles.noData}>データがありません</div>
@@ -492,22 +479,22 @@ export default function Dashboard() {
                       return (
                         <div key={index} className={styles.barWrapper}>
                           <div className={styles.stackedBars}>
-                            <div 
-                              className={`${styles.comboBar} ${styles.instagramBar}`}
-                              style={{height: `${Math.max(instagramHeight, 8)}%`}}
-                            >
-                              {item.Instagram.count > 0 && (
+                            {item.Instagram.count > 0 && (
+                              <div 
+                                className={`${styles.comboBar} ${styles.instagramBar}`}
+                                style={{height: `${Math.max(instagramHeight, 8)}%`}}
+                              >
                                 <div className={styles.barValueTop}>{item.Instagram.count}</div>
-                              )}
-                            </div>
-                            <div 
-                              className={`${styles.comboBar} ${styles.twitterBar}`}
-                              style={{height: `${Math.max(twitterHeight, 8)}%`}}
-                            >
-                              {item.Twitter.count > 0 && (
+                              </div>
+                            )}
+                            {item.Twitter.count > 0 && (
+                              <div 
+                                className={`${styles.comboBar} ${styles.twitterBar}`}
+                                style={{height: `${Math.max(twitterHeight, 8)}%`}}
+                              >
                                 <div className={styles.barValueTop}>{item.Twitter.count}</div>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -571,6 +558,8 @@ export default function Dashboard() {
                         
                         {/* Instagram ポイント */}
                         {platformEngagementData.map((item, index) => {
+                          if (item.Instagram.likes === 0) return null;
+                          
                           const maxLikes = Math.max(
                             ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
                             1
@@ -592,27 +581,27 @@ export default function Dashboard() {
                                   filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
                                 }}
                               />
-                              {item.Instagram.likes > 0 && (
-                                <text 
-                                  x={x} 
-                                  y={y - 3} 
-                                  fill="#f97316"
-                                  fontSize="2.8"
-                                  fontWeight="600"
-                                  textAnchor="middle"
-                                  stroke="white"
-                                  strokeWidth="0.8"
-                                  paintOrder="stroke"
-                                >
-                                  {item.Instagram.likes}
-                                </text>
-                              )}
+                              <text 
+                                x={x} 
+                                y={y - 3} 
+                                fill="#f97316"
+                                fontSize="2.8"
+                                fontWeight="600"
+                                textAnchor="middle"
+                                stroke="white"
+                                strokeWidth="0.8"
+                                paintOrder="stroke"
+                              >
+                                {item.Instagram.likes}
+                              </text>
                             </g>
                           );
                         })}
                         
                         {/* Twitter ポイント */}
                         {platformEngagementData.map((item, index) => {
+                          if (item.Twitter.likes === 0) return null;
+                          
                           const maxLikes = Math.max(
                             ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
                             1
@@ -634,21 +623,19 @@ export default function Dashboard() {
                                   filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))'
                                 }}
                               />
-                              {item.Twitter.likes > 0 && (
-                                <text 
-                                  x={x} 
-                                  y={y + 5} 
-                                  fill="#1DA1F2"
-                                  fontSize="2.8"
-                                  fontWeight="600"
-                                  textAnchor="middle"
-                                  stroke="white"
-                                  strokeWidth="0.8"
-                                  paintOrder="stroke"
-                                >
-                                  {item.Twitter.likes}
-                                </text>
-                              )}
+                              <text 
+                                x={x} 
+                                y={y + 5} 
+                                fill="#1DA1F2"
+                                fontSize="2.8"
+                                fontWeight="600"
+                                textAnchor="middle"
+                                stroke="white"
+                                strokeWidth="0.8"
+                                paintOrder="stroke"
+                              >
+                                {item.Twitter.likes}
+                              </text>
                             </g>
                           );
                         })}
