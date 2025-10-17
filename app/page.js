@@ -503,11 +503,11 @@ export default function Dashboard() {
 
                   {platformEngagementData && platformEngagementData.length >= 2 && (
                     <div className={styles.lineChartWrapper}>
-                      <svg 
-                        className={styles.lineChart} 
-                        viewBox="0 0 100 100" 
-                        preserveAspectRatio="none"
-                      >
+                     <svg 
+  className={styles.lineChart} 
+  viewBox="0 0 100 100" 
+  preserveAspectRatio="xMidYMid meet"
+>
                         {/* Instagram いいね数の折れ線 */}
                         <polyline
                           points={platformEngagementData.map((item, index) => {
