@@ -769,3 +769,16 @@
   font-weight: 600;
   color: #4a5568;
 }
+.stackedBars {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+}
+
+.stackedBars .comboBar {
+  flex: 1;
+  max-width: 25px;
+}

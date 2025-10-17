@@ -442,7 +442,7 @@ export default function Dashboard() {
                 <div className={styles.yAxisTicks}>
                   {(() => {
                     const maxCount = Math.max(
-                      ...platformEngagementData.map(d => d.Instagram.count + d.Twitter.count), 
+                      ...platformEngagementData.map(d => Math.max(d.Instagram.count, d.Twitter.count)), 
                       1
                     );
                     const step = Math.max(2, Math.ceil(maxCount / 5) * 2);
@@ -463,7 +463,7 @@ export default function Dashboard() {
                 <div className={styles.barsContainer}>
                   {platformEngagementData.map((item, index) => {
                     const maxCount = Math.max(
-                      ...platformEngagementData.map(d => d.Instagram.count + d.Twitter.count), 
+                      ...platformEngagementData.map(d => Math.max(d.Instagram.count, d.Twitter.count)), 
                       1
                     );
                     const step = Math.max(2, Math.ceil(maxCount / 5) * 2);
@@ -477,7 +477,7 @@ export default function Dashboard() {
                         <div className={styles.stackedBars}>
                           <div 
                             className={`${styles.comboBar} ${styles.instagramBar}`}
-                            style={{height: `${Math.max(instagramHeight, 5)}%`}}
+                            style={{height: `${Math.max(instagramHeight, 8)}%`}}
                           >
                             {item.Instagram.count > 0 && (
                               <div className={styles.barValueTop}>{item.Instagram.count}</div>
@@ -485,7 +485,7 @@ export default function Dashboard() {
                           </div>
                           <div 
                             className={`${styles.comboBar} ${styles.twitterBar}`}
-                            style={{height: `${Math.max(twitterHeight, 5)}%`}}
+                            style={{height: `${Math.max(twitterHeight, 8)}%`}}
                           >
                             {item.Twitter.count > 0 && (
                               <div className={styles.barValueTop}>{item.Twitter.count}</div>
@@ -508,7 +508,7 @@ export default function Dashboard() {
                       <polyline
                         points={platformEngagementData.map((item, index) => {
                           const maxLikes = Math.max(
-                            ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                            ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
                             1
                           );
                           const step = Math.ceil(maxLikes / 5 / 100) * 100;
@@ -519,7 +519,7 @@ export default function Dashboard() {
                         }).join(' ')}
                         fill="none"
                         stroke="#f97316"
-                        strokeWidth="1"
+                        strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         style={{
@@ -532,7 +532,7 @@ export default function Dashboard() {
                       <polyline
                         points={platformEngagementData.map((item, index) => {
                           const maxLikes = Math.max(
-                            ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                            ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
                             1
                           );
                           const step = Math.ceil(maxLikes / 5 / 100) * 100;
@@ -543,7 +543,7 @@ export default function Dashboard() {
                         }).join(' ')}
                         fill="none"
                         stroke="#1DA1F2"
-                        strokeWidth="1"
+                        strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         style={{
@@ -555,7 +555,7 @@ export default function Dashboard() {
                       {/* Instagram ポイント */}
                       {platformEngagementData.map((item, index) => {
                         const maxLikes = Math.max(
-                          ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                          ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
                           1
                         );
                         const step = Math.ceil(maxLikes / 5 / 100) * 100;
@@ -567,10 +567,10 @@ export default function Dashboard() {
                             <circle 
                               cx={x} 
                               cy={y} 
-                              r="1.5"
+                              r="2"
                               fill="#f97316"
                               stroke="white"
-                              strokeWidth="0.6"
+                              strokeWidth="1"
                             />
                             {item.Instagram.likes > 0 && (
                               <text 
@@ -594,7 +594,7 @@ export default function Dashboard() {
                       {/* Twitter ポイント */}
                       {platformEngagementData.map((item, index) => {
                         const maxLikes = Math.max(
-                          ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                          ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
                           1
                         );
                         const step = Math.ceil(maxLikes / 5 / 100) * 100;
@@ -606,10 +606,10 @@ export default function Dashboard() {
                             <circle 
                               cx={x} 
                               cy={y} 
-                              r="1.5"
+                              r="2"
                               fill="#1DA1F2"
                               stroke="white"
-                              strokeWidth="0.6"
+                              strokeWidth="1"
                             />
                             {item.Twitter.likes > 0 && (
                               <text 
@@ -639,7 +639,7 @@ export default function Dashboard() {
                 <div className={styles.yAxisTicks}>
                   {(() => {
                     const maxLikes = Math.max(
-                      ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                      ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
                       1
                     );
                     const step = Math.ceil(maxLikes / 5 / 100) * 100;
