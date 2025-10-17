@@ -12,7 +12,7 @@ export default function Dashboard() {
     uniqueUsers: 0
   });
   const [platformData, setPlatformData] = useState([]);
-  const [trendData, setTrendData] = useState([]);
+  const [platformEngagementData, setPlatformEngagementData] = useState([]);
   const [menuData, setMenuData] = useState([]);
   const [instagramPosts, setInstagramPosts] = useState([]);
   const [twitterPosts, setTwitterPosts] = useState([]);
@@ -44,7 +44,7 @@ export default function Dashboard() {
     await Promise.all([
       fetchStats(),
       fetchPlatformData(),
-      fetchTrendData(),
+      fetchPlatformEngagementData(),
       fetchMenuData(),
       fetchInstagramPosts(),
       fetchTwitterPosts()
@@ -177,7 +177,7 @@ export default function Dashboard() {
     }
   }
 
-  async function fetchTrendData() {
+  async function fetchPlatformEngagementData() {
     let query = supabase.from('posts').select('post_date, platform, likes');
     
     if (filters.menu !== 'すべて') {
@@ -237,9 +237,9 @@ export default function Dashboard() {
         };
       });
 
-      setTrendData(trends);
+      setPlatformEngagementData(trends);
     } else {
-      setTrendData([]);
+      setPlatformEngagementData([]);
     }
   }
 
@@ -432,17 +432,20 @@ export default function Dashboard() {
       </div>
 
       <div className={styles.chartGrid}>
-        {/* プラットフォーム別投稿数・エンゲージメント（棒グラフ+折れ線グラフ） */}
-        <div className={styles.chartCard}>
-          <div className={styles.chartTitle}>プラットフォーム別投稿数・エンゲージメント</div>
+        {/* プラットフォーム別投稿数・エンゲージメント（時間軸） */}
+        <div className={styles.chartCard} style={{gridColumn: '1 / -1'}}>
+          <div className={styles.chartTitle}>プラットフォーム別投稿数・エンゲージメント（過去5日間）</div>
           <div className={styles.comboChart}>
             <div className={styles.comboChartContainer}>
               <div className={styles.yAxisLeft}>
                 <div className={styles.yAxisLabel}>投稿数</div>
                 <div className={styles.yAxisTicks}>
                   {(() => {
-                    const maxCount = Math.max(...platformData.map(d => d.count), 1);
-                    const step = Math.max(10, Math.ceil(maxCount / 5 / 10) * 10);
+                    const maxCount = Math.max(
+                      ...platformEngagementData.map(d => d.Instagram.count + d.Twitter.count), 
+                      1
+                    );
+                    const step = Math.max(2, Math.ceil(maxCount / 5) * 2);
                     return [5, 4, 3, 2, 1, 0].map(i => (
                       <div key={i} className={styles.yAxisTick}>{step * i}</div>
                     ));
@@ -458,87 +461,169 @@ export default function Dashboard() {
                 </div>
 
                 <div className={styles.barsContainer}>
-                  {platformData.map((platform, index) => {
-                    const maxCount = Math.max(...platformData.map(d => d.count), 1);
-                    const step = Math.max(10, Math.ceil(maxCount / 5 / 10) * 10);
+                  {platformEngagementData.map((item, index) => {
+                    const maxCount = Math.max(
+                      ...platformEngagementData.map(d => d.Instagram.count + d.Twitter.count), 
+                      1
+                    );
+                    const step = Math.max(2, Math.ceil(maxCount / 5) * 2);
                     const maxValue = step * 5;
-                    const heightPercent = (platform.count / maxValue) * 100;
+                    
+                    const instagramHeight = (item.Instagram.count / maxValue) * 100;
+                    const twitterHeight = (item.Twitter.count / maxValue) * 100;
 
                     return (
                       <div key={index} className={styles.barWrapper}>
-                        <div 
-                          className={`${styles.comboBar} ${platform.platform === 'Instagram' ? styles.instagramBar : styles.twitterBar}`}
-                          style={{height: `${Math.max(heightPercent, 8)}%`}}
-                        >
-                          {platform.count > 0 && (
-                            <div className={styles.barValueTop}>{platform.count}</div>
-                          )}
+                        <div className={styles.stackedBars}>
+                          <div 
+                            className={`${styles.comboBar} ${styles.instagramBar}`}
+                            style={{height: `${Math.max(instagramHeight, 5)}%`}}
+                          >
+                            {item.Instagram.count > 0 && (
+                              <div className={styles.barValueTop}>{item.Instagram.count}</div>
+                            )}
+                          </div>
+                          <div 
+                            className={`${styles.comboBar} ${styles.twitterBar}`}
+                            style={{height: `${Math.max(twitterHeight, 5)}%`}}
+                          >
+                            {item.Twitter.count > 0 && (
+                              <div className={styles.barValueTop}>{item.Twitter.count}</div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {platformData && platformData.length >= 2 && (
+                {platformEngagementData && platformEngagementData.length >= 2 && (
                   <div className={styles.lineChartWrapper}>
                     <svg 
                       className={styles.lineChart} 
                       viewBox="0 0 100 100" 
                       preserveAspectRatio="none"
                     >
+                      {/* Instagram いいね数の折れ線 */}
                       <polyline
-                        points={platformData.map((platform, index) => {
-                          const maxLikes = Math.max(...platformData.map(d => d.likes), 1);
+                        points={platformEngagementData.map((item, index) => {
+                          const maxLikes = Math.max(
+                            ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                            1
+                          );
                           const step = Math.ceil(maxLikes / 5 / 100) * 100;
                           const maxValue = step * 5;
-                          const x = ((index + 0.5) / platformData.length) * 100;
-                          const y = 95 - ((platform.likes / maxValue) * 85);
+                          const x = ((index + 0.5) / platformEngagementData.length) * 100;
+                          const y = 95 - ((item.Instagram.likes / maxValue) * 85);
                           return `${x},${y}`;
                         }).join(' ')}
                         fill="none"
-                        stroke="#10b981"
+                        stroke="#f97316"
                         strokeWidth="1"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         style={{
-                          filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.5))',
+                          filter: 'drop-shadow(0 2px 4px rgba(249, 115, 22, 0.5))',
                           vectorEffect: 'non-scaling-stroke'
                         }}
                       />
-                      {platformData.map((platform, index) => {
-                        const maxLikes = Math.max(...platformData.map(d => d.likes), 1);
+                      
+                      {/* Twitter いいね数の折れ線 */}
+                      <polyline
+                        points={platformEngagementData.map((item, index) => {
+                          const maxLikes = Math.max(
+                            ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                            1
+                          );
+                          const step = Math.ceil(maxLikes / 5 / 100) * 100;
+                          const maxValue = step * 5;
+                          const x = ((index + 0.5) / platformEngagementData.length) * 100;
+                          const y = 95 - ((item.Twitter.likes / maxValue) * 85);
+                          return `${x},${y}`;
+                        }).join(' ')}
+                        fill="none"
+                        stroke="#1DA1F2"
+                        strokeWidth="1"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{
+                          filter: 'drop-shadow(0 2px 4px rgba(29, 161, 242, 0.5))',
+                          vectorEffect: 'non-scaling-stroke'
+                        }}
+                      />
+                      
+                      {/* Instagram ポイント */}
+                      {platformEngagementData.map((item, index) => {
+                        const maxLikes = Math.max(
+                          ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                          1
+                        );
                         const step = Math.ceil(maxLikes / 5 / 100) * 100;
                         const maxValue = step * 5;
-                        const x = ((index + 0.5) / platformData.length) * 100;
-                        const y = 95 - ((platform.likes / maxValue) * 85);
+                        const x = ((index + 0.5) / platformEngagementData.length) * 100;
+                        const y = 95 - ((item.Instagram.likes / maxValue) * 85);
                         return (
-                          <g key={`point-${index}`}>
+                          <g key={`ig-${index}`}>
                             <circle 
                               cx={x} 
                               cy={y} 
                               r="1.5"
-                              fill="#10b981"
+                              fill="#f97316"
                               stroke="white"
                               strokeWidth="0.6"
-                              style={{
-                                filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
-                                vectorEffect: 'non-scaling-stroke'
-                              }}
                             />
-                            {platform.likes > 0 && (
+                            {item.Instagram.likes > 0 && (
                               <text 
                                 x={x} 
-                                y={y < 15 ? y + 8 : y - 5} 
-                                fill="#10b981"
+                                y={y - 5} 
+                                fill="#f97316"
                                 fontSize="4"
                                 fontWeight="900"
                                 textAnchor="middle"
-                                dominantBaseline="middle"
                                 stroke="white"
                                 strokeWidth="1"
                                 paintOrder="stroke"
                               >
-                                {platform.likes.toLocaleString()}
+                                {item.Instagram.likes}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      })}
+                      
+                      {/* Twitter ポイント */}
+                      {platformEngagementData.map((item, index) => {
+                        const maxLikes = Math.max(
+                          ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                          1
+                        );
+                        const step = Math.ceil(maxLikes / 5 / 100) * 100;
+                        const maxValue = step * 5;
+                        const x = ((index + 0.5) / platformEngagementData.length) * 100;
+                        const y = 95 - ((item.Twitter.likes / maxValue) * 85);
+                        return (
+                          <g key={`tw-${index}`}>
+                            <circle 
+                              cx={x} 
+                              cy={y} 
+                              r="1.5"
+                              fill="#1DA1F2"
+                              stroke="white"
+                              strokeWidth="0.6"
+                            />
+                            {item.Twitter.likes > 0 && (
+                              <text 
+                                x={x} 
+                                y={y + 7} 
+                                fill="#1DA1F2"
+                                fontSize="4"
+                                fontWeight="900"
+                                textAnchor="middle"
+                                stroke="white"
+                                strokeWidth="1"
+                                paintOrder="stroke"
+                              >
+                                {item.Twitter.likes}
                               </text>
                             )}
                           </g>
@@ -553,7 +638,10 @@ export default function Dashboard() {
                 <div className={styles.yAxisLabel}>いいね数</div>
                 <div className={styles.yAxisTicks}>
                   {(() => {
-                    const maxLikes = Math.max(...platformData.map(d => d.likes), 1);
+                    const maxLikes = Math.max(
+                      ...platformEngagementData.map(d => d.Instagram.likes + d.Twitter.likes), 
+                      1
+                    );
                     const step = Math.ceil(maxLikes / 5 / 100) * 100;
                     return [5, 4, 3, 2, 1, 0].map(i => (
                       <div key={i} className={styles.yAxisTick}>
@@ -566,9 +654,9 @@ export default function Dashboard() {
             </div>
 
             <div className={styles.xAxisLabels}>
-              {platformData.map((platform, index) => (
+              {platformEngagementData.map((item, index) => (
                 <div key={index} className={styles.xAxisLabel}>
-                  {platform.platform === 'Instagram' ? 'IG' : 'TW'} {platform.platform}
+                  {item.day}
                 </div>
               ))}
             </div>
@@ -576,64 +664,21 @@ export default function Dashboard() {
             <div className={styles.chartLegend}>
               <div className={styles.legendItem}>
                 <div className={`${styles.legendColor} ${styles.instagramBar}`}></div>
-                <span>投稿数</span>
+                <span>Instagram 投稿数</span>
               </div>
               <div className={styles.legendItem}>
-                <div className={styles.legendLine}></div>
-                <span>いいね数</span>
+                <div className={`${styles.legendColor} ${styles.twitterBar}`}></div>
+                <span>Twitter 投稿数</span>
+              </div>
+              <div className={styles.legendItem}>
+                <div style={{width: '28px', height: '3px', background: '#f97316', borderRadius: '2px'}}></div>
+                <span>Instagram いいね</span>
+              </div>
+              <div className={styles.legendItem}>
+                <div style={{width: '28px', height: '3px', background: '#1DA1F2', borderRadius: '2px'}}></div>
+                <span>Twitter いいね</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartTitle}>プラットフォーム別投稿トレンド（過去5日間）</div>
-          <div className={styles.trendChart}>
-            {trendData.length > 0 ? (
-              <>
-                <div className={styles.trendBars}>
-                  {trendData.map((item, index) => {
-                    const maxCount = Math.max(...trendData.map(d => d.Instagram.count + d.Twitter.count), 1);
-                    
-                    return (
-                      <div key={index} className={styles.trendBarGroup}>
-                        <div className={styles.trendBarContainer}>
-                          <div 
-                            className={styles.trendBarInstagram}
-                            style={{height: `${Math.max((item.Instagram.count / maxCount * 100), 10)}%`}}
-                          >
-                            {item.Instagram.count > 0 && (
-                              <span className={styles.trendBarValue}>{item.Instagram.count}</span>
-                            )}
-                          </div>
-                          <div 
-                            className={styles.trendBarTwitter}
-                            style={{height: `${Math.max((item.Twitter.count / maxCount * 100), 10)}%`}}
-                          >
-                            {item.Twitter.count > 0 && (
-                              <span className={styles.trendBarValue}>{item.Twitter.count}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className={styles.trendBarLabel}>{item.day}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className={styles.chartLegend}>
-                  <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.instagramBar}`}></div>
-                    <span>Instagram</span>
-                  </div>
-                  <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.twitterBar}`}></div>
-                    <span>Twitter</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className={styles.noData}>データがありません</div>
-            )}
           </div>
         </div>
       </div>
