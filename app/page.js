@@ -461,40 +461,90 @@ export default function Dashboard() {
                 </div>
 
                 <div className={styles.barsContainer}>
-                  {platformEngagementData.map((item, index) => {
-                    const maxCount = Math.max(
-                      ...platformEngagementData.map(d => Math.max(d.Instagram.count, d.Twitter.count)), 
-                      1
-                    );
-                    const step = Math.max(2, Math.ceil(maxCount / 5) * 2);
-                    const maxValue = step * 5;
-                    
-                    const instagramHeight = (item.Instagram.count / maxValue) * 100;
-                    const twitterHeight = (item.Twitter.count / maxValue) * 100;
+               {/* Instagram ポイント */}
+{platformEngagementData.map((item, index) => {
+  const maxLikes = Math.max(
+    ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
+    1
+  );
+  const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
+  const maxValue = step * 5;
+  const x = ((index + 0.5) / platformEngagementData.length) * 100;
+  const y = 95 - ((item.Instagram.likes / maxValue) * 85);
+  return (
+    <g key={`ig-${index}`}>
+      <circle 
+        cx={x} 
+        cy={y} 
+        r="1.8"
+        fill="#f97316"
+        stroke="white"
+        strokeWidth="1"
+        style={{
+          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+        }}
+      />
+      {item.Instagram.likes > 0 && (
+        <text 
+          x={x} 
+          y={y - 4} 
+          fill="#f97316"
+          fontSize="3.5"
+          fontWeight="700"
+          textAnchor="middle"
+          stroke="white"
+          strokeWidth="1"
+          paintOrder="stroke"
+        >
+          {item.Instagram.likes}
+        </text>
+      )}
+    </g>
+  );
+})}
 
-                    return (
-                      <div key={index} className={styles.barWrapper}>
-                        <div className={styles.stackedBars}>
-                          <div 
-                            className={`${styles.comboBar} ${styles.instagramBar}`}
-                            style={{height: `${Math.max(instagramHeight, 8)}%`}}
-                          >
-                            {item.Instagram.count > 0 && (
-                              <div className={styles.barValueTop}>{item.Instagram.count}</div>
-                            )}
-                          </div>
-                          <div 
-                            className={`${styles.comboBar} ${styles.twitterBar}`}
-                            style={{height: `${Math.max(twitterHeight, 8)}%`}}
-                          >
-                            {item.Twitter.count > 0 && (
-                              <div className={styles.barValueTop}>{item.Twitter.count}</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+{/* Twitter ポイント */}
+{platformEngagementData.map((item, index) => {
+  const maxLikes = Math.max(
+    ...platformEngagementData.map(d => Math.max(d.Instagram.likes, d.Twitter.likes)), 
+    1
+  );
+  const step = Math.max(10, Math.ceil(maxLikes / 5 / 10) * 10);
+  const maxValue = step * 5;
+  const x = ((index + 0.5) / platformEngagementData.length) * 100;
+  const y = 95 - ((item.Twitter.likes / maxValue) * 85);
+  return (
+    <g key={`tw-${index}`}>
+      <circle 
+        cx={x} 
+        cy={y} 
+        r="1.8"
+        fill="#1DA1F2"
+        stroke="white"
+        strokeWidth="1"
+        style={{
+          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+        }}
+      />
+      {item.Twitter.likes > 0 && (
+        <text 
+          x={x} 
+          y={y + 6} 
+          fill="#1DA1F2"
+          fontSize="3.5"
+          fontWeight="700"
+          textAnchor="middle"
+          stroke="white"
+          strokeWidth="1"
+          paintOrder="stroke"
+        >
+          {item.Twitter.likes}
+        </text>
+      )}
+    </g>
+  );
+})}
+
                 </div>
 
                 {platformEngagementData && platformEngagementData.length >= 2 && (
