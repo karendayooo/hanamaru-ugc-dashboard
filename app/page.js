@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import styles from './page.module.css';
 
 export default function Dashboard() {
@@ -16,6 +15,8 @@ export default function Dashboard() {
   const [menuData, setMenuData] = useState([]);
   const [instagramPosts, setInstagramPosts] = useState([]);
   const [twitterPosts, setTwitterPosts] = useState([]);
+  const [youtubePosts, setYoutubePosts] = useState([]);
+  const [allData, setAllData] = useState([]);
   const [filters, setFilters] = useState({
     platform: 'すべて',
     menu: 'すべて',
@@ -29,7 +30,7 @@ export default function Dashboard() {
     
     async function loadData() {
       if (mounted) {
-        await fetchDashboardData();
+        await fetchAllData();
       }
     }
     
@@ -38,29 +39,97 @@ export default function Dashboard() {
     return () => {
       mounted = false;
     };
-  }, [filters.platform, filters.menu, filters.period]);
+  }, []);
 
-  async function fetchDashboardData() {
-    await Promise.all([
-      fetchStats(),
-      fetchPlatformData(),
-      fetchPlatformEngagementData(),
-      fetchMenuData(),
-      fetchInstagramPosts(),
-      fetchTwitterPosts()
-    ]);
+  useEffect(() => {
+    if (allData.length > 0) {
+      processData();
+    }
+  }, [allData, filters.platform, filters.menu, filters.period]);
+
+async function fetchAllData() {
+  setLoading(true);
+  try {
+    const response = await fetch('/api/ugc-data');
+    const result = await response.json();
+    
+    if (result.success && result.data) {
+      // データの正規化
+      const normalizedData = result.data.map(row => {
+        // プラットフォーム名を統一
+        let platformName = row.platform || row.Platform || '';
+        if (platformName.toLowerCase() === 'youtube') platformName = 'YouTube';
+        if (platformName.toLowerCase() === 'twitter' || platformName.toLowerCase() === 'x') platformName = 'Twitter';
+        if (platformName.toLowerCase() === 'instagram') platformName = 'Instagram';
+        
+        return {
+          platform: platformName,
+          username: row.Channel || row.Username || row['ユーザー名'] || row.username || 'unknown',
+          post_date: row.PublishedAt || row.PostedAt || row['投稿日時'] || row.post_date,
+          content: row.Description || row.Text || row.Caption || row['本文'] || row.content || '',
+          likes: parseInt(row.LikeCount || row.Likes || row['いいね数'] || row.likes || 0),
+          comments: parseInt(row.CommentCount || row.Comments || row['返信数'] || row.comments || 0),
+          shares: parseInt(row.RetweetCount || row.Shares || row['リツイート数'] || row.shares || 0),
+          menu_keyword: row.Keyword || row['キーワード'] || row.menu_keyword || '',
+          media_url: row.Thumbnail || row.MediaUrl || row.media_url || '',
+          post_url: row.URL || row['パーマリンク'] || row.post_url || ''
+        };
+      });
+      
+      console.log('Normalized data sample:', normalizedData[0]);
+      console.log('Platform counts:', {
+        YouTube: normalizedData.filter(d => d.platform === 'YouTube').length,
+        Twitter: normalizedData.filter(d => d.platform === 'Twitter').length,
+        Instagram: normalizedData.filter(d => d.platform === 'Instagram').length
+      });
+      
+      // キーワードがあるデータだけをフィルタ
+      const validData = normalizedData.filter(d => 
+        d.menu_keyword && 
+        d.menu_keyword.trim() !== '' &&
+        d.menu_keyword !== '_キーワード設定' &&
+        d.menu_keyword !== 'キーワード設定'
+      );
+      
+      console.log('Valid data with keywords:', validData.length);
+      
+      setAllData(validData);
+      setLastUpdated(new Date());
+    }
+  } catch (error) {
+    console.error('データ取得エラー:', error);
+  } finally {
+    setLoading(false);
+  }
+}
+
+
+  function processData() {
+    const filteredData = getFilteredData();
+    calculateStats(filteredData);
+    calculatePlatformData(filteredData);
+    calculatePlatformEngagementData(filteredData);
+    calculateMenuData(filteredData);
+    updatePosts(filteredData);
   }
 
-  async function handleRefresh() {
-    setLoading(true);
-    try {
-      await fetchDashboardData();
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error('更新エラー:', error);
-    } finally {
-      setLoading(false);
+  function getFilteredData() {
+    let filtered = [...allData];
+
+    if (filters.platform !== 'すべて') {
+      filtered = filtered.filter(d => d.platform === filters.platform);
     }
+
+    if (filters.menu !== 'すべて') {
+      filtered = filtered.filter(d => d.menu_keyword === filters.menu);
+    }
+
+    const dateFilter = getDateFilter();
+    if (dateFilter) {
+      filtered = filtered.filter(d => new Date(d.post_date) >= new Date(dateFilter));
+    }
+
+    return filtered;
   }
 
   function getDateFilter() {
@@ -84,266 +153,194 @@ export default function Dashboard() {
     return startDate.toISOString();
   }
 
-  async function fetchStats() {
-    let query = supabase.from('posts').select('*');
-    
-    if (filters.platform !== 'すべて') {
-      query = query.eq('platform', filters.platform);
-    }
-    if (filters.menu !== 'すべて') {
-      query = query.eq('menu_keyword', filters.menu);
-    }
+  function calculateStats(data) {
+    const totalPosts = data.length;
+    const totalLikes = data.reduce((sum, p) => sum + (p.likes || 0), 0);
+    const totalComments = data.reduce((sum, p) => sum + (p.comments || 0), 0);
+    const totalShares = data.reduce((sum, p) => sum + (p.shares || 0), 0);
+    const totalEngagement = totalLikes + totalComments + totalShares;
+    const avgEngagement = totalPosts > 0 ? (totalEngagement / totalPosts).toFixed(1) : 0;
+    const totalReach = (totalPosts * 71.5 / 1000).toFixed(1);
+    const uniqueUsers = new Set(data.map(p => p.username).filter(Boolean)).size;
 
-    const dateFilter = getDateFilter();
-    if (dateFilter) {
-      query = query.gte('post_date', dateFilter);
-    }
-
-    const { data } = await query;
-
-    if (data) {
-      const totalPosts = data.length;
-      const totalLikes = data.reduce((sum, p) => sum + (p.likes || 0), 0);
-      const totalComments = data.reduce((sum, p) => sum + (p.comments || 0), 0);
-      const totalShares = data.reduce((sum, p) => sum + (p.shares || 0), 0);
-      const totalEngagement = totalLikes + totalComments + totalShares;
-      const avgEngagement = totalPosts > 0 ? (totalEngagement / totalPosts).toFixed(1) : 0;
-      const totalReach = (totalPosts * 71.5 / 1000).toFixed(1);
-      const uniqueUsers = new Set(data.map(p => p.username).filter(Boolean)).size;
-
-      setStats({
-        totalPosts,
-        avgEngagement,
-        totalReach,
-        uniqueUsers
-      });
-    }
+    setStats({
+      totalPosts,
+      avgEngagement,
+      totalReach,
+      uniqueUsers
+    });
   }
 
-  async function fetchPlatformData() {
-    let query = supabase.from('posts').select('platform, likes, comments, shares');
-    
-    if (filters.menu !== 'すべて') {
-      query = query.eq('menu_keyword', filters.menu);
+ function calculatePlatformData(data) {
+  const platformStats = data.reduce((acc, post) => {
+    const platform = post.platform;
+    if (!acc[platform]) {
+      acc[platform] = { 
+        platform, 
+        count: 0, 
+        likes: 0,
+        comments: 0,
+        shares: 0
+      };
     }
+    acc[platform].count += 1;
+    acc[platform].likes += post.likes || 0;
+    acc[platform].comments += post.comments || 0;
+    acc[platform].shares += post.shares || 0;
+    return acc;
+  }, {});
 
-    const dateFilter = getDateFilter();
-    if (dateFilter) {
-      query = query.gte('post_date', dateFilter);
+  const total = data.length;
+  setPlatformData([
+    { 
+      ...platformStats.YouTube,
+      platform: 'YouTube',
+      count: platformStats.YouTube?.count || 0,
+      likes: platformStats.YouTube?.likes || 0,
+      comments: platformStats.YouTube?.comments || 0,
+      shares: platformStats.YouTube?.shares || 0,
+      percentage: total > 0 ? ((platformStats.YouTube?.count || 0) / total * 100) : 0 
+    },
+    { 
+      ...platformStats.Instagram,
+      platform: 'Instagram',
+      count: platformStats.Instagram?.count || 0,
+      likes: platformStats.Instagram?.likes || 0,
+      comments: platformStats.Instagram?.comments || 0,
+      shares: platformStats.Instagram?.shares || 0,
+      percentage: total > 0 ? ((platformStats.Instagram?.count || 0) / total * 100) : 0 
+    },
+    { 
+      ...platformStats.Twitter,
+      platform: 'Twitter',
+      count: platformStats.Twitter?.count || 0,
+      likes: platformStats.Twitter?.likes || 0,
+      comments: platformStats.Twitter?.comments || 0,
+      shares: platformStats.Twitter?.shares || 0,
+      percentage: total > 0 ? ((platformStats.Twitter?.count || 0) / total * 100) : 0 
     }
+  ]);
+}
 
-    const { data } = await query;
-
-    if (data) {
-      const platformStats = data.reduce((acc, post) => {
-        const platform = post.platform;
-        if (!acc[platform]) {
-          acc[platform] = { 
-            platform, 
-            count: 0, 
-            likes: 0,
-            comments: 0,
-            shares: 0
-          };
-        }
-        acc[platform].count += 1;
-        acc[platform].likes += post.likes || 0;
-        acc[platform].comments += post.comments || 0;
-        acc[platform].shares += post.shares || 0;
-        return acc;
-      }, {});
-
-      const total = data.length;
-      setPlatformData([
-        { 
-          ...platformStats.Instagram,
-          platform: 'Instagram',
-          count: platformStats.Instagram?.count || 0,
-          likes: platformStats.Instagram?.likes || 0,
-          comments: platformStats.Instagram?.comments || 0,
-          shares: platformStats.Instagram?.shares || 0,
-          percentage: total > 0 ? ((platformStats.Instagram?.count || 0) / total * 100) : 0 
-        },
-        { 
-          ...platformStats.Twitter,
-          platform: 'Twitter',
-          count: platformStats.Twitter?.count || 0,
-          likes: platformStats.Twitter?.likes || 0,
-          comments: platformStats.Twitter?.comments || 0,
-          shares: platformStats.Twitter?.shares || 0,
-          percentage: total > 0 ? ((platformStats.Twitter?.count || 0) / total * 100) : 0 
-        }
-      ]);
-    }
+function calculatePlatformEngagementData(data) {
+  let dateFilteredData = data;
+  
+  const dateFilter = getDateFilter();
+  if (!dateFilter) {
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+    dateFilteredData = data.filter(d => new Date(d.post_date) >= fiveDaysAgo);
   }
 
-  async function fetchPlatformEngagementData() {
-    let query = supabase.from('posts').select('post_date, platform, likes');
-    
-    if (filters.menu !== 'すべて') {
-      query = query.eq('menu_keyword', filters.menu);
-    }
-
-    const dateFilter = getDateFilter();
-    if (dateFilter) {
-      query = query.gte('post_date', dateFilter);
-    } else {
-      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
-      query = query.gte('post_date', fiveDaysAgo);
-    }
-
-    query = query.order('post_date');
-
-    const { data } = await query;
-
-    if (data && data.length > 0) {
-      const today = new Date();
-      const last5Days = [];
-      for (let i = 4; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        last5Days.push(date);
-      }
-
-      const dayData = {};
-
-      data.forEach(post => {
-        const date = new Date(post.post_date);
-        const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
-        
-        if (!dayData[dateKey]) {
-          dayData[dateKey] = { 
-            day: dateKey,
-            Instagram: { count: 0, likes: 0 },
-            Twitter: { count: 0, likes: 0 }
-          };
-        }
-
-        if (post.platform === 'Instagram') {
-          dayData[dateKey].Instagram.count += 1;
-          dayData[dateKey].Instagram.likes += post.likes || 0;
-        } else {
-          dayData[dateKey].Twitter.count += 1;
-          dayData[dateKey].Twitter.likes += post.likes || 0;
-        }
-      });
-
-      const trends = last5Days.map(date => {
-        const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
-        return dayData[dateKey] || {
-          day: dateKey,
-          Instagram: { count: 0, likes: 0 },
-          Twitter: { count: 0, likes: 0 }
-        };
-      });
-
-      setPlatformEngagementData(trends);
-    } else {
-      setPlatformEngagementData([]);
-    }
+  if (dateFilteredData.length === 0) {
+    setPlatformEngagementData([]);
+    return;
   }
 
-  async function fetchMenuData() {
-    let query = supabase.from('posts').select('menu_keyword, likes, comments, shares');
-    
-    if (filters.platform !== 'すべて') {
-      query = query.eq('platform', filters.platform);
-    }
-
-    const dateFilter = getDateFilter();
-    if (dateFilter) {
-      query = query.gte('post_date', dateFilter);
-    }
-
-    const { data } = await query;
-
-    if (data) {
-      const menuStats = data.reduce((acc, post) => {
-        const menu = post.menu_keyword;
-        if (!acc[menu]) {
-          acc[menu] = { menu, count: 0, totalEngagement: 0 };
-        }
-        acc[menu].count += 1;
-        acc[menu].totalEngagement += (post.likes || 0) + (post.comments || 0) + (post.shares || 0);
-        return acc;
-      }, {});
-
-      const menuArray = Object.values(menuStats)
-        .map(m => ({
-          ...m,
-          avgEngagement: m.count > 0 ? (m.totalEngagement / m.count).toFixed(1) : 0
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
-
-      setMenuData(menuArray);
-    }
+  const today = new Date();
+  const last5Days = [];
+  for (let i = 4; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    last5Days.push(date);
   }
 
-  async function fetchInstagramPosts() {
-    try {
-      let query = supabase
-        .from('posts')
-        .select('*')
-        .eq('platform', 'Instagram')
-        .not('menu_keyword', 'in', '("_キーワード設定","キーワード設定")')
-        .order('post_date', { ascending: false })
-        .limit(6);
+  const dayData = {};
 
-      if (filters.menu !== 'すべて') {
-        query = query.eq('menu_keyword', filters.menu);
-      }
+  dateFilteredData.forEach(post => {
+    const date = new Date(post.post_date);
+    const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
+    
+    if (!dayData[dateKey]) {
+      dayData[dateKey] = { 
+        day: dateKey,
+        YouTube: { count: 0, likes: 0 },
+        Instagram: { count: 0, likes: 0 },
+        Twitter: { count: 0, likes: 0 }
+      };
+    }
 
-      const dateFilter = getDateFilter();
-      if (dateFilter) {
-        query = query.gte('post_date', dateFilter);
-      }
+    if (post.platform === 'YouTube') {
+      dayData[dateKey].YouTube.count += 1;
+      dayData[dateKey].YouTube.likes += post.likes || 0;
+    } else if (post.platform === 'Instagram') {
+      dayData[dateKey].Instagram.count += 1;
+      dayData[dateKey].Instagram.likes += post.likes || 0;
+    } else if (post.platform === 'Twitter') {
+      dayData[dateKey].Twitter.count += 1;
+      dayData[dateKey].Twitter.likes += post.likes || 0;
+    }
+  });
 
-      const { data, error } = await query;
+  const trends = last5Days.map(date => {
+    const dateKey = `${date.getMonth() + 1}/${date.getDate()}`;
+    return dayData[dateKey] || {
+      day: dateKey,
+      YouTube: { count: 0, likes: 0 },
+      Instagram: { count: 0, likes: 0 },
+      Twitter: { count: 0, likes: 0 }
+    };
+  });
+
+  setPlatformEngagementData(trends);
+}
+
+
+  function calculateMenuData(data) {
+    const menuStats = data.reduce((acc, post) => {
+      const menu = post.menu_keyword;
+      if (!menu || menu === '_キーワード設定' || menu === 'キーワード設定') return acc;
       
-      if (error) {
-        console.error('Instagram投稿取得エラー:', error);
-        setInstagramPosts([]);
-      } else {
-        setInstagramPosts(data || []);
+      if (!acc[menu]) {
+        acc[menu] = { menu, count: 0, totalEngagement: 0 };
       }
-    } catch (error) {
-      console.error('Instagram投稿取得エラー:', error);
-      setInstagramPosts([]);
-    }
+      acc[menu].count += 1;
+      acc[menu].totalEngagement += (post.likes || 0) + (post.comments || 0) + (post.shares || 0);
+      return acc;
+    }, {});
+
+    const menuArray = Object.values(menuStats)
+      .map(m => ({
+        ...m,
+        avgEngagement: m.count > 0 ? (m.totalEngagement / m.count).toFixed(1) : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    setMenuData(menuArray);
   }
 
-  async function fetchTwitterPosts() {
-    try {
-      let query = supabase
-        .from('posts')
-        .select('*')
-        .eq('platform', 'Twitter')
-        .not('menu_keyword', 'in', '("_キーワード設定","キーワード設定")')
-        .order('post_date', { ascending: false })
-        .limit(6);
+ function updatePosts(data) {
+  console.log('updatePosts called with data length:', data.length);
+  
+  const sortedData = [...data].sort((a, b) => 
+    new Date(b.post_date) - new Date(a.post_date)
+  );
 
-      if (filters.menu !== 'すべて') {
-        query = query.eq('menu_keyword', filters.menu);
-      }
+  const youtube = sortedData
+    .filter(d => d.platform === 'YouTube')
+    .slice(0, 6);
+  
+  const instagram = sortedData
+    .filter(d => d.platform === 'Instagram')
+    .slice(0, 6);
+  
+  const twitter = sortedData
+    .filter(d => d.platform === 'Twitter')
+    .slice(0, 6);
 
-      const dateFilter = getDateFilter();
-      if (dateFilter) {
-        query = query.gte('post_date', dateFilter);
-      }
+  console.log('Posts by platform:', {
+    YouTube: youtube.length,
+    Instagram: instagram.length,
+    Twitter: twitter.length
+  });
 
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Twitter投稿取得エラー:', error);
-        setTwitterPosts([]);
-      } else {
-        setTwitterPosts(data || []);
-      }
-    } catch (error) {
-      console.error('Twitter投稿取得エラー:', error);
-      setTwitterPosts([]);
-    }
+  setYoutubePosts(youtube);
+  setInstagramPosts(instagram);
+  setTwitterPosts(twitter);
+}
+
+  async function handleRefresh() {
+    await fetchAllData();
   }
 
   function formatDate(dateString) {
@@ -432,7 +429,6 @@ export default function Dashboard() {
       </div>
 
       <div className={styles.chartGrid}>
-        {/* プラットフォーム別投稿数・エンゲージメント（時間軸） */}
         <div className={styles.chartCard} style={{gridColumn: '1 / -1'}}>
           <div className={styles.chartTitle}>プラットフォーム別投稿数・エンゲージメント（過去5日間）</div>
 
@@ -508,7 +504,6 @@ export default function Dashboard() {
                         viewBox="0 0 100 100" 
                         preserveAspectRatio="none"
                       >
-                        {/* Instagram いいね数の折れ線 */}
                         <polyline
                           points={platformEngagementData.map((item, index) => {
                             const maxLikes = Math.max(
@@ -532,7 +527,6 @@ export default function Dashboard() {
                           }}
                         />
                         
-                        {/* Twitter いいね数の折れ線 */}
                         <polyline
                           points={platformEngagementData.map((item, index) => {
                             const maxLikes = Math.max(
@@ -556,7 +550,6 @@ export default function Dashboard() {
                           }}
                         />
                         
-                        {/* Instagram ポイント */}
                         {platformEngagementData.map((item, index) => {
                           if (item.Instagram.likes === 0) return null;
                           
@@ -604,7 +597,6 @@ export default function Dashboard() {
                           );
                         })}
                         
-                        {/* Twitter ポイント */}
                         {platformEngagementData.map((item, index) => {
                           if (item.Twitter.likes === 0) return null;
                           
@@ -706,14 +698,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Instagram & Twitter 投稿セクション */}
       <div className={styles.postsSection}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>最新の投稿</h2>
         </div>
         
         <div className={styles.platformPostsContainer}>
-          {/* Instagram投稿 */}
           <div className={styles.platformColumn}>
             <div className={styles.platformColumnHeader}>
               <div className={`${styles.platformIcon} ${styles.instagram}`}>IG</div>
@@ -762,7 +752,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Twitter投稿 */}
           <div className={styles.platformColumn}>
             <div className={styles.platformColumnHeader}>
               <div className={`${styles.platformIcon} ${styles.twitter}`}>X</div>
