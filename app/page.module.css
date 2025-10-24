@@ -1,3 +1,5 @@
+/* page.module.css - 完全版 */
+
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -24,7 +26,10 @@
   opacity: 0.9;
 }
 
-/* 検索セクション */
+/* ========================================
+   検索セクション
+   ======================================== */
+
 .searchSection {
   background: #fff;
   border-radius: 16px;
@@ -40,6 +45,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  color: #1a1a1a;
 }
 
 .searchForm {
@@ -109,49 +115,10 @@
   cursor: not-allowed;
 }
 
-/* サマリーセクション */
-.summarySection {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  margin-bottom: 20px;
-}
+/* ========================================
+   グラフセクション
+   ======================================== */
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-}
-
-.statCard {
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%);
-  padding: 20px;
-  border-radius: 12px;
-  border: 2px solid #e2e8f0;
-  text-align: center;
-}
-
-.statLabel {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.statValue {
-  font-size: 32px;
-  font-weight: 800;
-  color: #1a1a1a;
-  margin-bottom: 4px;
-}
-
-.statSubtext {
-  font-size: 18px;
-  color: #64748b;
-}
-
-/* グラフセクション */
 .chartsSection {
   background: #fff;
   border-radius: 16px;
@@ -161,52 +128,368 @@
 }
 
 .chartCard {
-  margin-bottom: 32px;
+  margin-bottom: 0;
 }
 
-.chartCard:last-child {
-  margin-bottom: 0;
+/* グラフヘッダー */
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .chartTitle {
   font-size: 18px;
   font-weight: 700;
-  margin-bottom: 16px;
   color: #1a1a1a;
+  margin: 0;
 }
 
-.xAxisLabels {
+/* 凡例 - 横並び改善版 */
+.chartLegendHorizontal {
   display: flex;
-  justify-content: space-around;
-  margin-top: 12px;
-  padding: 0 20px;
-}
-
-.xAxisLabel {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  text-align: center;
-}
-
-.chartLegend {
-  display: flex;
-  justify-content: center;
   gap: 24px;
-  margin-top: 16px;
   flex-wrap: wrap;
+  align-items: center;
 }
+
+.legendGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.legendGroupTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: #64748b;
+  margin-right: 4px;
+}
+
 
 .legendItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 13px;
   font-weight: 700;
   color: #4a5568;
 }
 
-/* 投稿セクション */
+.legendBar {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.legendLine {
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.comboChartWrapper {
+  display: flex;
+  gap: 16px;
+  height: 450px;
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Y軸スタイル */
+/* Y軸スタイル - 完全修正版 */
+.yAxisLeft,
+.yAxisRight {
+  display: flex;
+  flex-direction: column;
+  width: 70px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.yAxisLabel {
+  font-size: 13px;
+  font-weight: 800;
+  color: #4a5568;
+  text-align: center;
+  padding: 4px 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  position: absolute;
+  top: -35px;
+  left: 0;
+  right: 0;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.yAxisTicks {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 8px 0;
+  margin-top: 0;
+}
+
+.yAxisTick {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a5568;
+  text-align: right;
+  padding-right: 8px;
+  line-height: 1;
+}
+
+.yAxisRight .yAxisTick {
+  text-align: left;
+  padding-left: 8px;
+  padding-right: 0;
+}
+
+
+/* メイングラフエリア */
+.chartMainArea {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* グリッド線 */
+.gridLines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gridLine {
+  height: 1px;
+  background: #e2e8f0;
+  width: 100%;
+}
+
+/* グラフコンテンツ */
+.chartContent {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  position: relative;
+  z-index: 2;
+}
+
+.chartColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  min-width: 50px;
+}
+
+/* 棒グラフ */
+.barGroup {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  padding: 0 6px;
+  margin-bottom: 30px;
+}
+
+.bar {
+  min-height: 4px;
+  width: 100%;
+  max-width: 24px;
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 6px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.bar:hover {
+  opacity: 0.85;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+.bar:active {
+  transform: translateY(-1px);
+}
+
+.barValue {
+  font-size: 11px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  line-height: 1;
+}
+
+/* 折れ線グラフのポイント */
+.linePoints {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.linePoint {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid white;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  pointer-events: all;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.linePoint:hover {
+  transform: translateX(-50%) scale(1.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+/* SVG折れ線 - 棒グラフの上に配置 */
+.lineChartSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* 折れ線グラフのポイント - 棒グラフの上に配置 */
+.linePoints {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.lineChartSvg polyline {
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+/* X軸ラベル */
+.xAxisLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a5568;
+  text-align: center;
+  margin-top: 8px;
+  white-space: nowrap;
+  background: #f8f9fa;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+/* ツールチップ */
+.bar[data-tooltip]:hover::after,
+.linePoint[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26, 26, 26, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.bar[data-tooltip]:hover::before,
+.linePoint[data-tooltip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(26, 26, 26, 0.95);
+  z-index: 1000;
+}
+
+/* 空のグラフ */
+.emptyChart {
+  text-align: center;
+  padding: 80px 20px;
+  color: #94a3b8;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+}
+
+.emptyChart p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.emptyChart p:first-child {
+  font-size: 18px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.emptyChartSub {
+  font-size: 14px !important;
+  color: #94a3b8 !important;
+}
+
+/* ========================================
+   投稿セクション
+   ======================================== */
+
 .postsSection {
   background: #fff;
   border-radius: 16px;
@@ -250,11 +533,146 @@
   border-color: #667eea;
 }
 
-.postsList {
-  display: grid;
-  gap: 16px;
+/* プラットフォームタブ */
+.platformTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
+.platformTab {
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.platformTab:hover {
+  background: #f8f9fa;
+  border-color: #cbd5e1;
+}
+
+.platformTab.active {
+  background: #667eea;
+  color: #fff;
+  border-color: #667eea;
+}
+
+.platformTab.youtubeTab.active {
+  background: #FF0000;
+  border-color: #FF0000;
+}
+
+.platformTab.instagramTab.active {
+  background: linear-gradient(135deg, #E4405F 0%, #C13584 100%);
+  border-color: #E4405F;
+}
+
+.platformTab.twitterTab.active {
+  background: #1DA1F2;
+  border-color: #1DA1F2;
+}
+
+/* プラットフォーム別カラム */
+.platformColumns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.platformColumn {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.platformIcon {
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.platformIcon.youtube {
+  background: #FF0000;
+  color: #fff;
+}
+
+.platformIcon.instagram {
+  background: linear-gradient(135deg, #E4405F 0%, #C13584 100%);
+  color: #fff;
+}
+
+.platformIcon.twitter {
+  background: #1DA1F2;
+  color: #fff;
+}
+
+.columnHeader h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  flex: 1;
+}
+
+.columnCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.columnPosts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.columnPosts .postCard {
+  flex-direction: column;
+  padding: 12px;
+  background: #fff;
+}
+
+.columnPosts .postThumbnail {
+  width: 100%;
+  height: 160px;
+}
+
+.columnPosts .postContent {
+  gap: 6px;
+}
+
+.emptyColumn {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* 投稿カード */
 .postCard {
   display: flex;
   gap: 16px;
@@ -298,6 +716,12 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.postMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .platformBadge {
@@ -374,7 +798,53 @@
   text-decoration: underline;
 }
 
-/* レスポンシブ */
+/* 単一カラム表示 */
+.singleColumnPosts {
+  display: grid;
+  gap: 16px;
+}
+
+.postCardLarge {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.postCardLarge:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.postThumbnailLarge {
+  flex-shrink: 0;
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+.postThumbnailLarge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ========================================
+   レスポンシブ対応
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .platformColumns {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 20px 16px;
@@ -396,12 +866,67 @@
     width: 100%;
   }
 
-  .statsGrid {
-    grid-template-columns: 1fr;
+  .chartHeader {
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .barChart {
-    height: 250px;
+  .chartLegendHorizontal {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .legendGroup {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .comboChartWrapper {
+    height: 320px;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .yAxisLeft,
+  .yAxisRight {
+    width: 50px;
+  }
+
+  .yAxisLabel {
+    font-size: 10px;
+    padding: 3px;
+  }
+
+  .yAxisTick {
+    font-size: 10px;
+  }
+
+  .bar {
+    max-width: 18px;
+    min-height: 3px;
+  }
+
+  .barValue {
+    font-size: 9px;
+  }
+
+  .linePoint {
+    width: 8px;
+    height: 8px;
+  }
+
+  .xAxisLabel {
+    font-size: 9px;
+    padding: 3px 4px;
+  }
+
+  .chartContent {
+    gap: 4px;
+  }
+
+  .chartColumn {
+    min-width: 35px;
   }
 
   .postCard {
@@ -418,161 +943,45 @@
     align-items: flex-start;
   }
 }
-/* 複合グラフ */
-.comboChartContainer {
-  display: flex;
-  gap: 12px;
-  align-items: stretch;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 2px solid #e2e8f0;
-  padding: 20px;
-  min-height: 400px;
-}
 
-.yAxisLeft,
-.yAxisRight {
-  display: flex;
-  flex-direction: column;
-  width: 60px;
-}
+@media (max-width: 480px) {
+  .comboChartWrapper {
+    height: 280px;
+    padding: 8px;
+  }
 
-.yAxisLabel {
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  text-align: center;
-  margin-bottom: 12px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-}
+  .yAxisLeft,
+  .yAxisRight {
+    width: 40px;
+  }
 
-.yAxisTicks {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 10px 0;
-}
+  .bar {
+    max-width: 14px;
+  }
 
-.yAxisTick {
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  text-align: right;
-  padding-right: 8px;
-}
+  .barValue {
+    font-size: 8px;
+  }
 
-.yAxisRight .yAxisTick {
-  text-align: left;
-  padding-left: 8px;
-  padding-right: 0;
-}
+  .linePoint {
+    width: 6px;
+    height: 6px;
+  }
 
-.comboChartArea {
-  flex: 1;
-  position: relative;
-  min-height: 350px;
-}
+  .xAxisLabel {
+    font-size: 8px;
+  }
 
-.gridLines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  pointer-events: none;
-}
+  .legendItem {
+    font-size: 11px;
+  }
 
-.gridLine {
-  height: 1px;
-  background: #e2e8f0;
-  width: 100%;
-}
+  .legendBar {
+    width: 14px;
+    height: 10px;
+  }
 
-.barsContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-  padding: 10px 0;
-}
-
-.barGroup {
-  flex: 1;
-  display: flex;
-  gap: 2px;
-  align-items: flex-end;
-  justify-content: center;
-  max-width: 80px;
-}
-
-.barYoutube,
-.barInstagram,
-.barTwitter {
-  flex: 1;
-  min-width: 20px;
-  border-radius: 4px 4px 0 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 4px;
-  transition: all 0.2s;
-  cursor: pointer;
-  position: relative;
-}
-
-.barYoutube {
-  background: linear-gradient(180deg, #FF0000 0%, #CC0000 100%);
-}
-
-.barInstagram {
-  background: linear-gradient(180deg, #E4405F 0%, #C13584 100%);
-}
-
-.barTwitter {
-  background: linear-gradient(180deg, #1DA1F2 0%, #0C85D0 100%);
-}
-
-.barYoutube:hover,
-.barInstagram:hover,
-.barTwitter:hover {
-  opacity: 0.8;
-  transform: translateY(-2px);
-}
-
-.barValueInside {
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.lineChartWrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-}
-
-.lineChart {
-  width: 100%;
-  height: 100%;
-}
-
-.emptyChart {
-  text-align: center;
-  padding: 60px;
-  color: #64748b;
-  font-size: 16px;
-  font-weight: 700;
+  .legendLine {
+    width: 20px;
+  }
 }
