@@ -26,7 +26,7 @@ export async function GET() {
       { name: 'Instagram投稿データ', platform: 'Instagram' }
     ];
     
-    const allData = [];
+    const allData: any[] = [];
     
     for (const sheet of sheets) {
       const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet.name)}`;
@@ -54,17 +54,19 @@ export async function GET() {
       
       // 最初の1件のデータ構造を確認
       if (parsed.data.length > 0) {
-        console.log(`${sheet.name} 列名:`, Object.keys(parsed.data[0]));
-        console.log(`${sheet.name} サンプルデータ:`, parsed.data[0]);
+        const firstRow = parsed.data[0] as any;
+        console.log(`${sheet.name} 列名:`, Object.keys(firstRow));
+        console.log(`${sheet.name} サンプルデータ:`, firstRow);
       }
       
       // 日付フィールドを探す
-      const dateFields = ['PublishedAt', 'PostedAt', 'CreatedAt', 'Date', 'Timestamp'];
-      let dateField = null;
+      const dateFields = ['PublishedAt', 'PostedAt', 'CreatedAt', 'Date', 'Timestamp', '投稿日時'];
+      let dateField: string | null = null;
       
       if (parsed.data.length > 0) {
+        const firstRow = parsed.data[0] as any;
         for (const field of dateFields) {
-          if (parsed.data[0].hasOwnProperty(field)) {
+          if (firstRow.hasOwnProperty(field)) {
             dateField = field;
             console.log(`${sheet.name} 使用する日付フィールド:`, dateField);
             break;
@@ -76,7 +78,7 @@ export async function GET() {
         console.warn(`${sheet.name} 日付フィールドが見つかりません。全データを取得します。`);
         // 日付フィールドがない場合は最初の10件を取得
         const limitedData = parsed.data.slice(0, ITEMS_PER_PLATFORM);
-        const dataWithPlatform = limitedData.map(row => ({
+        const dataWithPlatform = limitedData.map((row: any) => ({
           ...row,
           platform: sheet.platform
         }));
@@ -86,19 +88,19 @@ export async function GET() {
       }
       
       // 日付でソートして最新のものを取得
-      const sortedData = parsed.data
-        .filter(row => row[dateField]) // 日付があるものだけ
-        .sort((a, b) => {
+      const sortedData = (parsed.data as any[])
+        .filter((row: any) => row[dateField]) // 日付があるものだけ
+        .sort((a: any, b: any) => {
           const dateA = new Date(a[dateField]);
           const dateB = new Date(b[dateField]);
-          return dateB - dateA; // 新しい順
+          return dateB.getTime() - dateA.getTime(); // 新しい順
         })
         .slice(0, ITEMS_PER_PLATFORM); // 最新10件のみ
       
       console.log(`${sheet.name} 取得件数:`, sortedData.length);
       
       // プラットフォーム情報を追加
-      const dataWithPlatform = sortedData.map(row => ({
+      const dataWithPlatform = sortedData.map((row: any) => ({
         ...row,
         platform: sheet.platform
       }));
@@ -118,7 +120,7 @@ export async function GET() {
         note: 'Google Sheets APIは1分あたり100リクエストまで。頻繁な更新は避けてください。'
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching data:', error);
     return NextResponse.json({ 
       error: error.message,
